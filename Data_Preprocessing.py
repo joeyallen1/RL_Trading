@@ -9,6 +9,12 @@ def load_data(stock_ticker, start_date):
     data.dropna(inplace=True)
     return data
 
+
+# SMA Ratio:
+# - simple trend indicator
+# - uses a short term and longer term simple moving average
+# - a ratio value above 1 typically indicates a bullish signal and below 1 indicates a bearish signal
+# - calculated here using 10 and 50 day windows
 def add_SMA(dataframe):
     df = dataframe.copy(deep=True)
     df['SMA 10'] = df.rolling(window=10)['Close'].mean()
@@ -18,6 +24,12 @@ def add_SMA(dataframe):
     df.drop(labels=['SMA 10', 'SMA 50'], axis=1, inplace=True)
     return df
 
+
+# RSI (Relative Strength Index):
+# - simple momentum indicator, used to identify overbought or oversold conditions
+# - calculated using formula 100 - (100 / (1 + RSI)) where RSI is the mean gain divided by the mean loss over some time period
+# - a value above 70 is typically used to indicate that an asset is overbought and a value less tahn 30 is typically used to indicate that an asset is oversold
+# - calculated here using a 14 day rolling window
 def add_RSI(dataframe):
     df = dataframe.copy(deep=True)
     df['Diff'] = df['Close'].diff()
@@ -29,6 +41,14 @@ def add_RSI(dataframe):
     df.drop(labels=['Diff', 'Mean gain', 'Mean loss'], axis=1, inplace=True)
     return df
 
+
+# Bollinger Bands:
+# - used to measure price volatility of an asset 
+# - calculated with two bands, two standard deviations above and below a moving average line
+# - the distance between the bands indicates volatility of the asset
+# - also used to indicate overbought or oversold conditions - overbought when the price moves above the upper band and oversold when the price moves below the lower band
+# - here, just the Bollinger Bandwidth is used as a volatility indicator for simplicity and reducing the number of redundant features- a large bandwidth indicates high volatility and smaller bandwidth indicates lower volatility 
+# - the bandwidth is calculated as: (upper band - lower band)/ middle band for a given window (20 periods in this case)
 def add_bandwidth(dataframe):
     df = dataframe.copy(deep=True)
     df['Std dev'] = df['Close'].rolling(window=20).std()
