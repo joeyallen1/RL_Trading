@@ -59,7 +59,7 @@ def add_bandwidth(dataframe):
     df.drop(labels=['Std dev', 'SMA 20'], axis=1, inplace=True)
     return df
 
-def split_and_save_data(dataframe, filename):
+def scale_and_save_data(dataframe, filename):
     df = dataframe.copy(deep=True)
     training_data = df.iloc[:int(df.shape[0] * 0.7), :].copy(deep=True)
     validation_data = df.iloc[int(df.shape[0] * 0.7):int(df.shape[0] * 0.8), :].copy(deep=True)
@@ -72,6 +72,8 @@ def split_and_save_data(dataframe, filename):
         testing_data[label] = (testing_data[label] - min_max_values[label][0]) / (min_max_values[label][1] - min_max_values[label][0])
     df = pd.concat([training_data, validation_data, testing_data])
     df.to_csv(filename)
+
+
 
 if __name__ == "__main__":
     stock_ticker = sys.argv[1]
