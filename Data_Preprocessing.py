@@ -54,8 +54,8 @@ def split_and_save_data(dataframe, filename):
     df.to_csv(filename)
 
 if __name__ == "__main__":
-    stock_ticker = sys.argv[0]
-    start_date = sys.argv[1]
+    stock_ticker = sys.argv[1]
+    start_date = sys.argv[2]
     df = load_data(stock_ticker, start_date)
     df = add_SMA(df)
     df = add_RSI(df)
