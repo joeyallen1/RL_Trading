@@ -2,6 +2,8 @@ import yfinance
 import pandas as pd
 import numpy as np
 import sys
+import matplotlib.pyplot as plt
+
 
 def load_data(stock_ticker, start_date):
     data = yfinance.download(stock_ticker, interval="1d", auto_adjust=True, start=start_date)
@@ -74,7 +76,45 @@ def scale_and_save_data(dataframe, filename):
     df.to_csv(filename)
 
 
+def visualize_data(df, stock_ticker, start_date):
+    plt.subplot(2, 3, 1)
+    plt.plot(df['Close'])
+    plt.ylabel('Adjusted Close Price')
+    plt.xlabel('Date')
+    plt.title('Adjusted Close over Time')
 
+    plt.subplot(2, 3, 2)
+    plt.hist(df['Volume'], bins=15)
+    plt.xlabel('Shares Traded')
+    plt.ylabel('Frequency (Days)')
+    plt.title('Distribution of Daily Trading Volume')
+
+    plt.subplot(2, 3, 3)
+    plt.hist(df['SMA Ratio'], bins=15)
+    plt.xlabel('SMA Ratio')
+    plt.ylabel('Frequency (Days)')
+    plt.title('Distribution of Daily SMA Ratios')
+
+    plt.subplot(2, 3, 4)
+    plt.hist(df['RSI'], bins=15)
+    plt.xlabel('RSI')
+    plt.ylabel('Frequency (Days)')
+    plt.title('Distribution of Daily RSI')
+
+    plt.subplot(2, 3, 5)
+    plt.hist(df['Bandwidth'], bins=15)
+    plt.xlabel('Bollinger Band Width')
+    plt.ylabel('Frequency (Days)')
+    plt.title('Distribution of Bollinger Band Widths')
+    
+    plt.suptitle(f"Dataset Visualization of {stock_ticker} stock starting on {start_date} (start date may be clipped)")
+    plt.tight_layout()
+    plt.show()
+
+
+# used KO and start date of 2005-01-01
+# have to close out of matplotlib window in order to save data 
+# (keyboard interrupt doesn't work)
 if __name__ == "__main__":
     stock_ticker = sys.argv[1]
     start_date = sys.argv[2]
@@ -82,4 +122,5 @@ if __name__ == "__main__":
     df = add_SMA(df)
     df = add_RSI(df)
     df = add_bandwidth(df)
-    split_and_save_data(df, f"{stock_ticker}_data.csv")
+    visualize_data(df, stock_ticker, start_date)
+    scale_and_save_data(df, f"{stock_ticker}_data.csv")
