@@ -90,8 +90,12 @@ class TestTrainingEnv:
         assert env._action_to_allocation(3) == 1.0
         assert env._action_to_allocation(4) == 1.0
 
-    def test_get_new_portfolio_value(self):
-        pass
+    def test_get_new_portfolio_value(self, setup):
+        env = setup
+        env.cur_row_num = 1
+        env.asset_allocation = 0.1
+        env.cur_action = 3
+        assert env._get_new_portfolio_value() == pytest.approx(9318.77146)
 
     def test_get_reward(self):
         pass
