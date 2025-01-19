@@ -15,6 +15,7 @@ class TrainingEnv(gym.Env):
         self.data = data
         self.episode_length = episode_length
         self.cur_action = 0
+        self.allocation_change = 0.0
     
         # action space: Sell 25%, sell 10%, no change, buy 10%, buy 25% (percentages are of total portfolio value, asset + cash, at each timestep)
         self.action_space = Discrete(5)
@@ -55,6 +56,7 @@ class TrainingEnv(gym.Env):
         else:
             terminated = False
         truncated = False
+        self.allocation_change = self._action_to_allocation(action) - self.asset_allocation
         self.asset_allocation = self._action_to_allocation(action)
         obs = self._get_obs()
         rew = self._get_reward()
@@ -63,26 +65,20 @@ class TrainingEnv(gym.Env):
     
     # converts action to asset allocation value
     def _action_to_allocation(self, action):
-        allocation_change = 0.0
-        if action == 0: allocation_change = -.25
-        elif action == 1: allocation_change = -.1
-        elif action == 2: allocation_change = 0.0
-        elif action == 3: allocation_change = .1
-        else: allocation_change = 0.25
-        return max(0.0, min(1.0, self.asset_allocation + allocation_change))
+        alloc_change = 0.0
+        if action == 0: alloc_change = -.25
+        elif action == 1: alloc_change = -.1
+        elif action == 2: alloc_change = 0.0
+        elif action == 3: alloc_change = .1
+        else: alloc_change = 0.25
+        return max(0.0, min(1.0, self.asset_allocation + alloc_change))
     
     # calculates new portfolio value 
     # accounts for possible commision costs + slippage by applying a fixed 1% cost to the price of each trade
     def _get_new_portfolio_value(self):
         asset_change = (self.data.iloc[self.cur_row_num, 0] - self.data.iloc[self.cur_row_num - 1, 0]) / self.data.iloc[self.cur_row_num - 1, 0]
         new_portfolio_value = self.portfolio_value * (self.asset_allocation * (1.0 + asset_change) + (1.0 - self.asset_allocation))
-        allocation_change = 0.0
-        if self.cur_action == 0: allocation_change = .25
-        elif self.cur_action == 1: allocation_change = .1
-        elif self.cur_action == 2: allocation_change = 0.0
-        elif self.cur_action == 3: allocation_change = .1
-        else: allocation_change = 0.25
-        new_portfolio_value = new_portfolio_value - (.01 * allocation_change * self.portfolio_value)
+        new_portfolio_value = new_portfolio_value - (.01 * abs(self.allocation_change) * self.portfolio_value)
         return new_portfolio_value
     
     # returns reward in the form of regular percent return of the total portfolio (stock + cash) over this timestep
