@@ -97,5 +97,10 @@ class TestTrainingEnv:
         env.cur_action = 3
         assert env._get_new_portfolio_value() == pytest.approx(9318.77146)
 
-    def test_get_reward(self):
-        pass
+    def test_get_reward(self, setup):
+        env = setup
+        env.cur_row_num = 1
+        env.asset_allocation = 0.1
+        env.cur_action = 3
+        assert env._get_reward() == pytest.approx(-.0681225854)
+        assert env.portfolio_value == pytest.approx(9318.77146)
