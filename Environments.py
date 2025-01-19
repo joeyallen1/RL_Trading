@@ -120,6 +120,6 @@ class TestingEnv(TrainingEnv):
         truncated = False
         self.asset_allocation = self._action_to_allocation(action)
         obs = self._get_obs()
-        rew = self._get_reward()
+        rew = self._get_reward() 
         info = self._get_info()
         return obs, rew, terminated, truncated, info
