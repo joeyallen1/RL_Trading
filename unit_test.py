@@ -15,7 +15,7 @@ class TestTrainingEnv:
         data = pd.read_csv('Amazon Data.csv')
         data.drop(labels=['Date'], axis=1, inplace=True)
         data = data.iloc[0:int(0.7 * len(data)), :].copy(deep=True)
-        return TrainingEnv(episode_length=3, data=data)
+        return TrainingEnv(episode_length=2, data=data)
     
     def test_initialization(self, setup):
         env = setup
@@ -24,8 +24,9 @@ class TestTrainingEnv:
         assert env.cur_row_num == 0
         assert env.starting_row_num == 0
         assert env.asset_allocation == 0.0
-        assert env.episode_length == 3
+        assert env.episode_length == 2
         assert env.cur_action == 0
+        assert env.allocation_change == 0.0
 
     def test_get_obs(self, setup):
         env = setup
@@ -72,8 +73,50 @@ class TestTrainingEnv:
                                    'Asset Allocation': 0.0}
 
 
-    def test_step(self):
-        pass
+    def test_step(self, setup):
+        env = setup
+        obs, rew, terminated, truncated, info = env.step(3)
+        assert env.cur_action == 3
+        assert env.cur_row_num == 1
+        assert env.asset_allocation == 0.1
+        assert env.allocation_change == 0.1
+        array = np.array([0.00014867929282713304,
+                                0.03335066736002774,
+                                0.6450050877556867,
+                                0.4592888893984638,
+                                0.32254884209612456, 0.1])
+        assert np.allclose(obs, array) == True
+        assert rew == pytest.approx(-.0681225854)
+        assert terminated == False
+        assert truncated == False
+        assert info == {'Portfolio Value': 9318.774145808777, 
+                                   'Action Taken': 3, 
+                                   'Asset Allocation': 0.1}
+    
+        
+
+        obs, rew, terminated, truncated, info = env.step(0)
+        assert env.cur_action == 0
+        assert env.cur_row_num == 2
+        assert env.asset_allocation == 0.0
+        array = np.array([0.0003283315773097594,
+                          0.03177904893973537,
+                          0.6254686372437431,
+                          0.32753872517122085,
+                          0.3179901400175601, 0.0])
+        assert np.allclose(obs, array) == True
+        assert rew == pytest.approx(-.001)
+        assert terminated == False
+        assert truncated == False
+        assert info == {'Portfolio Value': 9309.455371662967, 
+                                   'Action Taken': 0, 
+                                   'Asset Allocation': 0.0}
+        assert env.allocation_change == -.1
+
+        obs, rew, terminated, truncated, info = env.step(2)
+        assert terminated == True
+
+        
 
     def test_action_to_allocation(self, setup):
         env = setup
@@ -95,6 +138,7 @@ class TestTrainingEnv:
         env.cur_row_num = 1
         env.asset_allocation = 0.1
         env.cur_action = 3
+        env.allocation_change = 0.1
         assert env._get_new_portfolio_value() == pytest.approx(9318.77146)
 
     def test_get_reward(self, setup):
@@ -102,5 +146,18 @@ class TestTrainingEnv:
         env.cur_row_num = 1
         env.asset_allocation = 0.1
         env.cur_action = 3
+        env.allocation_change = 0.1
         assert env._get_reward() == pytest.approx(-.0681225854)
         assert env.portfolio_value == pytest.approx(9318.77146)
+
+
+
+# class TestValidationEnv:
+
+#     @pytest.fixture
+#     def setup(self):
+#         data = pd.read_csv('Amazon Data.csv')
+#         data.drop(labels=['Date'], axis=1, inplace=True)
+#         data = data.iloc[0:int(0.7 * len(data)), :].copy(deep=True)
+#         return ValidationEnv(episode_length=3, data=data)
+    
