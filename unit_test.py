@@ -11,20 +11,33 @@ import pandas as pd
 class TestTrainingEnv:
 
     @pytest.fixture
-    def setup_data(self):
+    def setup(self):
         data = pd.read_csv('Amazon Data.csv')
         data.drop(labels=['Date'], axis=1, inplace=True)
         data = data.iloc[0:int(0.7 * len(data)), :].copy(deep=True)
         return TrainingEnv(episode_length=3, data=data)
     
-    def test_initialization(self):
-        # assert env.budget == 10000
-        pass
+    def test_initialization(self, setup):
+        env = setup
+        assert env.budget == 10000
+        assert env.portfolio_value == 10000
+        assert env.cur_row_num == 0
+        assert env.starting_row_num == 0
+        assert env.asset_allocation == 0.0
+        assert env.episode_length == 3
+        assert env.cur_action == 0
 
-    def test_get_obs(self):
-        pass
+    def test_get_obs(self, setup):
+        env = setup
+        array = np.array([0.0004522231894523374,
+                                           0.022337782400184896,
+                                           0.665141206940271,
+                                           0.5709102556338256,
+                                           0.35495395092346826,
+                                           0.0])
+        assert np.allclose(env._get_obs(), array) == True
 
-    def test_get_info(self):
+    def test_get_info(self, setup):
         pass
 
     def test_reset(self):
