@@ -34,7 +34,7 @@ class TrainingEnv(gym.Env):
         return {'Portfolio Value': self.portfolio_value, 'Action Taken': self.cur_action, 'Asset Allocation': self.asset_allocation}
 
     # sets the starting row and starting asset allocation
-    def reset(self, seed=5):
+    def reset(self, seed=None):
         super().reset(seed=seed)
         self.portfolio_value = self.budget
         self.cur_action = 0
