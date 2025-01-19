@@ -38,7 +38,10 @@ class TestTrainingEnv:
         assert np.allclose(env._get_obs(), array) == True
 
     def test_get_info(self, setup):
-        pass
+        env = setup
+        assert env._get_info() == {'Portfolio Value': 10000, 
+                                   'Action Taken': 0, 
+                                   'Asset Allocation': 0.0}
 
     def test_reset(self):
         pass
