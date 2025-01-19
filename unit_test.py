@@ -43,14 +43,52 @@ class TestTrainingEnv:
                                    'Action Taken': 0, 
                                    'Asset Allocation': 0.0}
 
-    def test_reset(self):
-        pass
+    def test_reset(self, setup):
+        env = setup
+        env.portfolio_value = 1500
+        env.cur_action = 1
+        env.starting_row_num = 5
+        env.cur_row_num = 9
+        env.asset_allocation = 2.0
+
+        obs, info = env.reset(seed=5)
+
+        assert env.portfolio_value == 10000
+        assert env.cur_action == 0
+        assert env.starting_row_num == 3217
+        assert env.cur_row_num == 3217
+        assert env.asset_allocation == 0.0
+
+        array = np.array([0.13707649239765515,
+                          0.4038240788890815,
+                          0.33211783944424916,
+                          0.462807681391612,
+                          0.11893703950449101, 
+                          0.0])
+        assert np.allclose(obs, array) == True
+
+        assert info == {'Portfolio Value': 10000, 
+                                   'Action Taken': 0, 
+                                   'Asset Allocation': 0.0}
+
 
     def test_step(self):
         pass
 
-    def test_action_to_allocation(self):
-        pass
+    def test_action_to_allocation(self, setup):
+        env = setup
+        env.asset_allocation = 0.5
+        assert env._action_to_allocation(0) == .25
+        assert env._action_to_allocation(1) == .4
+        assert env._action_to_allocation(2) == .5
+        assert env._action_to_allocation(3) == .6
+        assert env._action_to_allocation(4) == .75
+
+        env.asset_allocation = 0.1
+        assert env._action_to_allocation(0) == 0.0
+        env.asset_allocation = 0.9
+        assert env._action_to_allocation(3) == 1.0
+        assert env._action_to_allocation(4) == 1.0
 
     def test_get_new_portfolio_value(self):
         pass

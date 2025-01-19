@@ -100,7 +100,7 @@ class TestingEnv(TrainingEnv):
         TrainingEnv.__init__(self, data)
 
     # sets the starting row and starting asset allocation
-    def reset(self, seed=5):
+    def reset(self, seed=None):
         super().reset(seed=seed)
         self.portfolio_value = self.budget
         self.cur_action = 0
