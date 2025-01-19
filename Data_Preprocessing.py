@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 
 def load_data(stock_ticker, start_date):
-    data = yfinance.download(stock_ticker, interval="1d", auto_adjust=True, start=start_date)
+    data = yfinance.download(stock_ticker, interval="1d", auto_adjust=True, start=start_date, multi_level_index=False)
     data = data.loc[:,['Close', 'Volume']]
     data.dropna(inplace=True)
     return data
