@@ -44,6 +44,7 @@ class TrainingEnv(gym.Env):
 
         self.cur_row_num = self.starting_row_num
         self.asset_allocation = 0.0
+        self.allocation_change = 0.0
         
         return self._get_obs(), self._get_info()
 
@@ -106,6 +107,7 @@ class TestingEnv(TrainingEnv):
         self.cur_row_num = self.starting_row_num
 
         self.asset_allocation = 0.0
+        self.allocation_change = 0.0
         
         return self._get_obs(), self._get_info()
     
