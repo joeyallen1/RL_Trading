@@ -98,7 +98,7 @@ class TestingEnv(TrainingEnv):
 
     # sets the starting row and starting asset allocation
     def reset(self, seed=None):
-        super().reset(seed=seed)
+        gym.Env.reset(self, seed=seed)
         self.portfolio_value = self.budget
         self.cur_action = 2
 
