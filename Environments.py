@@ -20,13 +20,13 @@ class TrainingEnv(gym.Env):
         # action space: Sell 25%, sell 10%, no change, buy 10%, buy 25% (percentages are of total portfolio value, asset + cash, at each timestep)
         self.action_space = Discrete(5)
 
-        # observation space: Close, Volume, SMA Ratio, RSI, Bandwidth, Asset Allocation
+        # observation space: Volume, SMA Ratio, RSI, Bandwidth, Percent Change, Asset Allocation
         self.observation_space = Box(low=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
-            high=np.array([np.inf, np.inf, np.inf, 100.0, np.inf, 1.0]), dtype=np.float64)
+            high=np.array([np.inf, np.inf, 100.0, np.inf, np.inf, 1.0]), dtype=np.float64)
 
     # returns the current row in dataframe with current asset allocation appended
     def _get_obs(self):
-        obs = np.array(self.data.iloc[self.cur_row_num, :])
+        obs = np.array(self.data.iloc[self.cur_row_num, 1:])
         obs = np.append(obs, self.asset_allocation)
         return obs
 
@@ -77,8 +77,7 @@ class TrainingEnv(gym.Env):
     # calculates new portfolio value 
     # accounts for possible commision costs + slippage by applying a fixed 1% cost to the price of each trade
     def _get_new_portfolio_value(self):
-        asset_change = (self.data.iloc[self.cur_row_num, 0] - self.data.iloc[self.cur_row_num - 1, 0]) / self.data.iloc[self.cur_row_num - 1, 0]
-        new_portfolio_value = self.portfolio_value * (self.asset_allocation * (1.0 + asset_change) + (1.0 - self.asset_allocation))
+        new_portfolio_value = self.portfolio_value * (self.asset_allocation * (1.0 + self.data.iloc[self.cur_row_num, 4]) + (1.0 - self.asset_allocation))
         new_portfolio_value = new_portfolio_value - (.01 * abs(self.allocation_change) * self.portfolio_value)
         return new_portfolio_value
     
@@ -87,7 +86,7 @@ class TrainingEnv(gym.Env):
         new_portfolio_value = self._get_new_portfolio_value()
         reward = (new_portfolio_value - self.portfolio_value) / self.portfolio_value
         self.portfolio_value = new_portfolio_value
-        return reward 
+        return reward
     
 
 
