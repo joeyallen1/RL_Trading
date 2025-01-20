@@ -61,13 +61,20 @@ def add_bandwidth(dataframe):
     df.drop(labels=['Std dev', 'SMA 20'], axis=1, inplace=True)
     return df
 
+
+def add_pct_change(dataframe):
+    df = dataframe.copy(deep=True)
+    df['Pct Change'] = df['Close'].pct_change()
+    df.dropna(inplace=True)
+    return df
+
 def scale_and_save_data(dataframe, filename):
     df = dataframe.copy(deep=True)
     training_data = df.iloc[:int(df.shape[0] * 0.7), :].copy(deep=True)
     validation_data = df.iloc[int(df.shape[0] * 0.7):int(df.shape[0] * 0.8), :].copy(deep=True)
     testing_data = df.iloc[int(df.shape[0] * 0.8):, :].copy(deep=True)
     min_max_values = {}
-    for label in ['Close', 'Volume', 'SMA Ratio', 'RSI', 'Bandwidth']:
+    for label in df.columns:
         min_max_values[label] = [training_data[label].min(), training_data[label].max()]
         training_data[label] = (training_data[label] - min_max_values[label][0]) / (min_max_values[label][1] - min_max_values[label][0])
         validation_data[label] = (validation_data[label] - min_max_values[label][0]) / (min_max_values[label][1] - min_max_values[label][0])
@@ -106,7 +113,13 @@ def visualize_data(df, stock_ticker, start_date):
     plt.xlabel('Bollinger Band Width')
     plt.ylabel('Frequency (Days)')
     plt.title('Distribution of Bollinger Band Widths')
-    
+
+    plt.subplot(2, 3, 6)
+    plt.plot(df['Pct Change'])
+    plt.ylabel('Percent Change from previous close price')
+    plt.xlabel('Date')
+    plt.title('Percent Change in Price over time')
+
     plt.suptitle(f"Dataset Visualization of {stock_ticker} stock starting on {start_date} (start date may be clipped)")
     plt.tight_layout()
     plt.show()
@@ -122,5 +135,6 @@ if __name__ == "__main__":
     df = add_SMA(df)
     df = add_RSI(df)
     df = add_bandwidth(df)
+    df = add_pct_change(df)
     visualize_data(df, stock_ticker, start_date)
     scale_and_save_data(df, f"{stock_ticker}_data.csv")
