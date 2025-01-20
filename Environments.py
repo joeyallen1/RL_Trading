@@ -3,6 +3,7 @@ from gymnasium.spaces import Discrete
 from gymnasium.spaces import Box
 import numpy as np
 
+
 class TrainingEnv(gym.Env):
 
     def __init__(self, data, episode_length = 250, budget=10000):
