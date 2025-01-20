@@ -38,7 +38,7 @@ class TrainingEnv(gym.Env):
     def reset(self, seed=None):
         super().reset(seed=seed)
         self.portfolio_value = self.budget
-        self.cur_action = 0
+        self.cur_action = 2
 
         self.starting_row_num = self.np_random.integers(0, int(len(self.data)) - self.episode_length - 1)
 
@@ -100,7 +100,7 @@ class TestingEnv(TrainingEnv):
     def reset(self, seed=None):
         super().reset(seed=seed)
         self.portfolio_value = self.budget
-        self.cur_action = 0
+        self.cur_action = 2
 
         self.starting_row_num = 0
 
