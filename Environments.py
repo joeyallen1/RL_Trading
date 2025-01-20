@@ -2,7 +2,6 @@ import gymnasium as gym
 from gymnasium.spaces import Discrete
 from gymnasium.spaces import Box
 import numpy as np
-import pandas as pd
 
 class TrainingEnv(gym.Env):
 
