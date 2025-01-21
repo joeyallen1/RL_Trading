@@ -26,7 +26,7 @@ class TrainingEnv(gym.Env):
 
     # returns the current row in dataframe with current asset allocation appended
     def _get_obs(self):
-        obs = np.array(self.data.iloc[self.cur_row_num, 1:])
+        obs = np.array(self.data.iloc[self.cur_row_num, :])
         obs = np.append(obs, self.asset_allocation)
         return obs
 
