@@ -87,7 +87,7 @@ class TrainingEnv(gym.Env):
         new_portfolio_value = max(self._get_new_portfolio_value(), 1.0)
         reward = np.log(new_portfolio_value / self.portfolio_value)
         self.portfolio_value = new_portfolio_value
-        return reward
+        return max(-2.0, min(2.0, reward))
     
 
 
