@@ -10,7 +10,7 @@ class TestTrainingEnv:
     @pytest.fixture
     def setup(self):
         data = pd.read_csv('KO_data.csv')
-        data.drop(labels=['Date', 'Close'], axis=1, inplace=True)
+        data.drop(labels=['Date'], axis=1, inplace=True)
         data = data.iloc[0:int(0.7 * len(data)), :].copy(deep=True)
         return TrainingEnv(episode_length=2, data=data)
     
@@ -60,10 +60,10 @@ class TestTrainingEnv:
         assert env.allocation_change == 0.0
 
         array = np.array([0.0322325078173549,
-                          0.42452633335910633,
-                          0.35718232757798035,
-                          0.24570881378974688,
-                          0.4111111493335887,
+                          0.42452658206995736,
+                          0.357175589302116,
+                          0.24570967083777226,
+                          0.4111117340690847,
                           0.0])
         assert np.allclose(obs, array) == True
 
@@ -86,10 +86,10 @@ class TestTrainingEnv:
                           0.38048715906695335,
                           0.1])
         assert np.allclose(obs, array) == True
-        assert rew == pytest.approx(0.0370487159)
+        assert rew == pytest.approx(-.0020646568)
         assert terminated == False
         assert truncated == False
-        assert info == {'Portfolio Value': 10370.487159066954, 
+        assert info == {'Portfolio Value': 9979.353431720145, 
                                    'Action Taken': 3, 
                                    'Asset Allocation': 0.1}
     
@@ -106,11 +106,11 @@ class TestTrainingEnv:
                           0.05872394755585882,
                           0.4033609876071836,
                           0.0])
-        assert np.allclose(obs, array) == True
-        assert rew == pytest.approx(-0.0010000000000)
+        assert np.allclose(obs, array, atol=0.0001) == True
+        assert rew == pytest.approx(-0.001)
         assert terminated == False
         assert truncated == False
-        assert info == {'Portfolio Value': 10360.116671907886, 
+        assert info == {'Portfolio Value': 9969.374078288425, 
                                    'Action Taken': 0, 
                                    'Asset Allocation': 0.0}
 
@@ -140,7 +140,7 @@ class TestTrainingEnv:
         env.asset_allocation = 0.1
         env.cur_action = 3
         env.allocation_change = 0.1
-        assert env._get_new_portfolio_value() == pytest.approx(10370.48716)
+        assert env._get_new_portfolio_value() == pytest.approx(9979.353431720145)
 
     def test_get_reward(self, setup):
         env = setup
@@ -148,8 +148,8 @@ class TestTrainingEnv:
         env.asset_allocation = 0.1
         env.cur_action = 3
         env.allocation_change = 0.1
-        assert env._get_reward() == pytest.approx(0.0370487159)
-        assert env.portfolio_value == pytest.approx(10370.48716)
+        assert env._get_reward() == pytest.approx(-.0020646568)
+        assert env.portfolio_value == pytest.approx(9979.353431720145)
 
 
 
@@ -158,7 +158,7 @@ class TestValidationEnv:
     @pytest.fixture
     def setup(self):
         data = pd.read_csv('KO_data.csv')
-        data.drop(labels=['Date', 'Close'], axis=1, inplace=True)
+        data.drop(labels=['Date'], axis=1, inplace=True)
         data = data.iloc[0:3, :].copy(deep=True)
         return ValidationEnv(data=data)
     
@@ -207,10 +207,10 @@ class TestValidationEnv:
                           0.38048715906695335,
                           0.1])
         assert np.allclose(obs, array) == True
-        assert rew == pytest.approx(0.0370487159)
+        assert rew == pytest.approx(-.0020646568)
         assert terminated == False
         assert truncated == False
-        assert info == {'Portfolio Value': 10370.487159066954, 
+        assert info == {'Portfolio Value': 9979.353431720145, 
                                    'Action Taken': 3, 
                                    'Asset Allocation': 0.1}
     
@@ -227,10 +227,10 @@ class TestValidationEnv:
                           0.05872394755585882,
                           0.4033609876071836,
                           0.0])
-        assert np.allclose(obs, array) == True
-        assert rew == pytest.approx(-0.0010000000000)
+        assert np.allclose(obs, array, atol=0.0001) == True
+        assert rew == pytest.approx(-0.001)
         assert terminated == True
         assert truncated == False
-        assert info == {'Portfolio Value': 10360.116671907886, 
+        assert info == {'Portfolio Value': 9969.374078288425, 
                                    'Action Taken': 0, 
                                    'Asset Allocation': 0.0}

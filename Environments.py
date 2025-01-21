@@ -12,7 +12,7 @@ class TrainingEnv(gym.Env):
         self.cur_row_num = 0
         self.starting_row_num = 0
         self.asset_allocation = 0.0
-        self.data = data
+        self.data = data   #Close, Volume, SMA Ratio, RSI, Bandwidth, Percent Change
         self.episode_length = episode_length
         self.cur_action = 2
         self.allocation_change = 0.0
@@ -26,7 +26,7 @@ class TrainingEnv(gym.Env):
 
     # returns the current row in dataframe with current asset allocation appended
     def _get_obs(self):
-        obs = np.array(self.data.iloc[self.cur_row_num, :])
+        obs = np.array(self.data.iloc[self.cur_row_num, 1:])
         obs = np.append(obs, self.asset_allocation)
         return obs
 
@@ -77,7 +77,8 @@ class TrainingEnv(gym.Env):
     # calculates new portfolio value 
     # accounts for possible commision costs + slippage by applying a fixed 1% cost to the price of each trade
     def _get_new_portfolio_value(self):
-        new_portfolio_value = self.portfolio_value * (self.asset_allocation * (1.0 + self.data.iloc[self.cur_row_num, 4]) + (1.0 - self.asset_allocation))
+        percent_change = (self.data.iloc[self.cur_row_num, 0] - self.data.iloc[self.cur_row_num-1, 0]) / self.data.iloc[self.cur_row_num-1, 0]
+        new_portfolio_value = self.portfolio_value * (self.asset_allocation * (1.0 + percent_change) + (1.0 - self.asset_allocation))
         new_portfolio_value = new_portfolio_value - (.01 * abs(self.allocation_change) * self.portfolio_value)
         return new_portfolio_value
     
