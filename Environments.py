@@ -14,7 +14,7 @@ class TrainingEnv(gym.Env):
         self.asset_allocation = 0.0
         self.data = data
         self.episode_length = episode_length
-        self.cur_action = 0
+        self.cur_action = 2
         self.allocation_change = 0.0
     
         # action space: Sell 25%, sell 10%, no change, buy 10%, buy 25% (percentages are of total portfolio value, asset + cash, at each timestep)
