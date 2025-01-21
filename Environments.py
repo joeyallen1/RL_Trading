@@ -54,6 +54,8 @@ class TrainingEnv(gym.Env):
         self.cur_row_num += 1
         if (self.cur_row_num - self.starting_row_num) > self.episode_length:
             terminated = True
+        elif self.portfolio_value < self.budget * 0.01:
+            terminated = True
         else:
             terminated = False
         truncated = False
