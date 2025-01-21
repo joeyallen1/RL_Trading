@@ -77,7 +77,7 @@ class TrainingEnv(gym.Env):
     # calculates new portfolio value 
     # accounts for possible commision costs + slippage by applying a fixed 1% cost to the price of each trade
     def _get_new_portfolio_value(self):
-        if self.data.iloc[self.cur_row_num-1, 0] == 0.0:
+        if self.data.iloc[self.cur_row_num-1, 0] < 1e-6:
             percent_change = (self.data.iloc[self.cur_row_num, 0] - self.data.iloc[self.cur_row_num-1, 0]) / 1e-6
         else:
             percent_change = (self.data.iloc[self.cur_row_num, 0] - self.data.iloc[self.cur_row_num-1, 0]) / self.data.iloc[self.cur_row_num-1, 0]
@@ -88,10 +88,7 @@ class TrainingEnv(gym.Env):
     # returns reward in the form of regular percent return of the total portfolio (stock + cash) over this timestep
     def _get_reward(self):
         new_portfolio_value = self._get_new_portfolio_value()
-        if self.portfolio_value < 1e-6:
-            reward = (new_portfolio_value - self.portfolio_value) / 1e-6
-        else:
-            reward = (new_portfolio_value - self.portfolio_value) / self.portfolio_value
+        reward = np.log(new_portfolio_value / self.portfolio_value)
         self.portfolio_value = new_portfolio_value
         return reward
     

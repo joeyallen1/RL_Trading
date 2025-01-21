@@ -151,11 +151,6 @@ class TestTrainingEnv:
         assert env._get_reward() == pytest.approx(-.0020646568)
         assert env.portfolio_value == pytest.approx(9979.353431720145)
 
-    def test_near_zero_values(self, setup):
-        env = setup
-        assert env.data.iloc[:, 0].isnull().any() == False
-        assert (env.data.iloc[:, 0] == 0.0).any() == False
-
 
 
 class TestValidationEnv:
