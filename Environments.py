@@ -77,10 +77,7 @@ class TrainingEnv(gym.Env):
     # calculates new portfolio value 
     # accounts for possible commision costs + slippage by applying a fixed 1% cost to the price of each trade
     def _get_new_portfolio_value(self):
-        if self.data.iloc[self.cur_row_num-1, 0] < 1e-3:
-            percent_change = (self.data.iloc[self.cur_row_num, 0] - self.data.iloc[self.cur_row_num-1, 0]) / 1e-3
-        else:
-            percent_change = (self.data.iloc[self.cur_row_num, 0] - self.data.iloc[self.cur_row_num-1, 0]) / self.data.iloc[self.cur_row_num-1, 0]
+        percent_change = (self.data.iloc[self.cur_row_num, 0] - self.data.iloc[self.cur_row_num-1, 0]) / self.data.iloc[self.cur_row_num-1, 0]
         new_portfolio_value = self.portfolio_value * (self.asset_allocation * (1.0 + percent_change) + (1.0 - self.asset_allocation))
         new_portfolio_value = new_portfolio_value - (.01 * abs(self.allocation_change) * self.portfolio_value)
         return new_portfolio_value
