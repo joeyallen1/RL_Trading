@@ -54,8 +54,6 @@ class TrainingEnv(gym.Env):
         self.cur_row_num += 1
         if (self.cur_row_num - self.starting_row_num) > self.episode_length:
             terminated = True
-        elif self.portfolio_value < self.budget * 0.01:
-            terminated = True
         else:
             terminated = False
         truncated = False
@@ -89,7 +87,7 @@ class TrainingEnv(gym.Env):
     
     # returns reward in the form of regular percent return of the total portfolio (stock + cash) over this timestep
     def _get_reward(self):
-        new_portfolio_value = self._get_new_portfolio_value()
+        new_portfolio_value = max(self._get_new_portfolio_value(), 1.0)
         reward = np.log(new_portfolio_value / self.portfolio_value)
         self.portfolio_value = new_portfolio_value
         return reward
