@@ -11,7 +11,7 @@ class TestTrainingEnv:
     def setup(self):
         data = pd.read_csv('KO_data.csv')
         data.drop(labels=['Date'], axis=1, inplace=True)
-        data = data.iloc[0:int(0.7 * len(data)), :].copy(deep=True)
+        data = data.iloc[:, :].copy(deep=True)
         return TrainingEnv(episode_length=2, data=data)
     
     def test_initialization(self, setup):
@@ -150,6 +150,11 @@ class TestTrainingEnv:
         env.allocation_change = 0.1
         assert env._get_reward() == pytest.approx(-.0020646568)
         assert env.portfolio_value == pytest.approx(9979.353431720145)
+
+    def test_near_zero_values(self, setup):
+        env = setup
+        assert env.data.iloc[:, 0].isnull().any() == False
+        assert (env.data.iloc[:, 0] == 0.0).any() == False
 
 
 
