@@ -4,6 +4,9 @@ import numpy as np
 import sys
 import matplotlib.pyplot as plt
 
+df = pd.DataFrame()
+df.rolling(window=3).
+
 
 def load_data(stock_ticker, start_date):
     data = yfinance.download(stock_ticker, interval="1d", auto_adjust=True, start=start_date, multi_level_index=False)
@@ -17,14 +20,22 @@ def load_data(stock_ticker, start_date):
 # - uses a short term and longer term simple moving average
 # - a ratio value above 1 typically indicates a bullish signal and below 1 indicates a bearish signal
 # - calculated here using 10 and 50 day windows
-def add_SMA(dataframe):
+# def add_SMA(dataframe):
+#     df = dataframe.copy(deep=True)
+#     df['SMA 10'] = df.rolling(window=10)['Close'].mean()
+#     df['SMA 50'] = df.rolling(window=50)['Close'].mean()
+#     df.dropna(inplace=True)
+#     df['SMA Ratio'] = df['SMA 10'] / df['SMA 50']
+#     df.drop(labels=['SMA 10', 'SMA 50'], axis=1, inplace=True)
+#     return df
+
+
+def add_MACD(dataframe):
     df = dataframe.copy(deep=True)
-    df['SMA 10'] = df.rolling(window=10)['Close'].mean()
-    df['SMA 50'] = df.rolling(window=50)['Close'].mean()
-    df.dropna(inplace=True)
-    df['SMA Ratio'] = df['SMA 10'] / df['SMA 50']
-    df.drop(labels=['SMA 10', 'SMA 50'], axis=1, inplace=True)
-    return df
+    df['EMA 3'] = df['Close'].ewm(span=3, adjust=False).mean()
+    df['EMA 10'] = df['Close'].ewm(span=10, adjust=False).mean()
+    df['MACD'] = df['EMA 10'] = df['EMA 3']
+
 
 
 # RSI (Relative Strength Index):
