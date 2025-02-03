@@ -4,8 +4,6 @@ import numpy as np
 import sys
 import matplotlib.pyplot as plt
 
-df = pd.DataFrame()
-df.rolling(window=3).
 
 
 def load_data(stock_ticker, start_date):
@@ -14,27 +12,37 @@ def load_data(stock_ticker, start_date):
     data.dropna(inplace=True)
     return data
 
-
-# SMA Ratio:
-# - simple trend indicator
-# - uses a short term and longer term simple moving average
-# - a ratio value above 1 typically indicates a bullish signal and below 1 indicates a bearish signal
-# - calculated here using 10 and 50 day windows
-# def add_SMA(dataframe):
-#     df = dataframe.copy(deep=True)
-#     df['SMA 10'] = df.rolling(window=10)['Close'].mean()
-#     df['SMA 50'] = df.rolling(window=50)['Close'].mean()
-#     df.dropna(inplace=True)
-#     df['SMA Ratio'] = df['SMA 10'] / df['SMA 50']
-#     df.drop(labels=['SMA 10', 'SMA 50'], axis=1, inplace=True)
-#     return df
-
-
+## add regular MACD and MACD oscillator
 def add_MACD(dataframe):
     df = dataframe.copy(deep=True)
     df['EMA 3'] = df['Close'].ewm(span=3, adjust=False).mean()
     df['EMA 10'] = df['Close'].ewm(span=10, adjust=False).mean()
-    df['MACD'] = df['EMA 10'] = df['EMA 3']
+    df.dropna(inplace=True)
+    df['MACD'] = df['EMA 3'] - df['EMA 10']
+    df['MACD Oscillator'] = (df['EMA 3'] - df['EMA 10']) / df['EMA 10']
+    df.drop(labels=['EMA 3' 'EMA 10'], axis=1, inplace=True)
+    return df
+
+
+## volume percentage oscillator
+def add_Volume_Oscillator(dataframe):
+    df = dataframe.copy(deep=True)
+    df['EMA 5'] = df['Volume'].ewm(span=5, adjust=False).mean()
+    df['EMA 20'] = df['Volume'].ewm(span=5, adjust=False).mean()
+    df.dropna(inplace=True)
+    df['Volume Oscillator'] = (df['EMA 5'] - df['EMA 20']) / df['EMA 20'] 
+    df.drop(labels=['EMA 5' 'EMA 20'], axis=1, inplace=True)
+    return df
+
+## standard deviation percentage oscillator
+def add_Std_Oscillator(dataframe):
+    df = dataframe.copy(deep=True)
+    df['Std'] = df['Close'].rolling(window=14).std()
+    rolling_max = df['Std'].rolling(window=14).max()
+    rolling_min = df['Std'].rolling(window=14).min()
+    df['Std Oscillator'] = (df['Std'] - rolling_min) / (rolling_max - rolling_min)
+    df.drop(labels=['Std'], axis=1, inplace=True)
+    return df
 
 
 
@@ -54,23 +62,6 @@ def add_RSI(dataframe):
     df.drop(labels=['Diff', 'Mean gain', 'Mean loss'], axis=1, inplace=True)
     return df
 
-
-# Bollinger Bands:
-# - used to measure price volatility of an asset 
-# - calculated with two bands, two standard deviations above and below a moving average line
-# - the distance between the bands indicates volatility of the asset
-# - also used to indicate overbought or oversold conditions - overbought when the price moves above the upper band and oversold when the price moves below the lower band
-# - here, just the Bollinger Bandwidth is used as a volatility indicator for simplicity and reducing the number of redundant features- a large bandwidth indicates high volatility and smaller bandwidth indicates lower volatility 
-# - the bandwidth is calculated as: (upper band - lower band)/ middle band for a given window (20 periods in this case)
-def add_bandwidth(dataframe):
-    df = dataframe.copy(deep=True)
-    df['Std dev'] = df['Close'].rolling(window=20).std()
-    df.dropna(inplace=True)
-    df['SMA 20'] = df['Close'].rolling(window=20).mean()
-    df.dropna(inplace=True)
-    df['Bandwidth'] = ((df['SMA 20'] + (2 * df['Std dev'])) - (df['SMA 20'] - (2 * df['Std dev']))) / df['SMA 20']
-    df.drop(labels=['Std dev', 'SMA 20'], axis=1, inplace=True)
-    return df
 
 
 def add_pct_change(dataframe):
@@ -149,3 +140,6 @@ if __name__ == "__main__":
     df = add_pct_change(df)
     visualize_data(df, stock_ticker, start_date)
     scale_and_save_data(df, f"{stock_ticker}_data.csv")
+
+
+    # remember to drop NaN or 0 values 
