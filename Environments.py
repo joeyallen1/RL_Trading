@@ -11,7 +11,7 @@ class TrainingEnv(gym.Env):
         self.portfolio_value = budget
         self.cur_row_num = 0
         self.starting_row_num = 0
-        self.asset_allocation = 0.0
+        self.asset_allocation = 0.5
         self.data = data   #Close, Volume, SMA Ratio, RSI, Bandwidth, Percent Change
         self.episode_length = episode_length
         self.cur_action = 2
