@@ -6,11 +6,25 @@ import matplotlib.pyplot as plt
 
 
 
-def load_data(stock_ticker, start_date):
+def load_data(stock_ticker: str, start_date:str) -> pd.DataFrame:
+    """Returns a dataframe containing the close and volume data 
+    for a given stock ticker and start date."""
+
     data = yfinance.download(stock_ticker, interval="1d", auto_adjust=True, start=start_date, multi_level_index=False)
     data = data.loc[:,['Close', 'Volume']]
     data.dropna(inplace=True)
     return data
+
+
+def split_data(df: pd.DataFrame) -> tuple:
+    """Splits the given dataframe into training, validation,
+    and test sets."""
+    length = len(df)
+    training_df = df.iloc[:int(0.6 * length), :]
+    validation_df = df.iloc[int(0.6*length):int(0.7*length), :]
+    testing_df = df.iloc[int(0.7*length):, :]
+    return training_df, validation_df, testing_df
+    
 
 ## add regular MACD and MACD oscillator
 def add_MACD(dataframe):
@@ -45,7 +59,6 @@ def add_Std_Oscillator(dataframe):
     return df
 
 
-
 # RSI (Relative Strength Index):
 # - simple momentum indicator, used to identify overbought or oversold conditions
 # - calculated using formula 100 - (100 / (1 + RSI)) where RSI is the mean gain divided by the mean loss over some time period
@@ -61,7 +74,6 @@ def add_RSI(dataframe):
     df['RSI'] = 100 - (100 / (1 + (df['Mean gain'] / df['Mean loss'])))
     df.drop(labels=['Diff', 'Mean gain', 'Mean loss'], axis=1, inplace=True)
     return df
-
 
 
 def add_pct_change(dataframe):
@@ -134,10 +146,12 @@ if __name__ == "__main__":
     stock_ticker = sys.argv[1]
     start_date = sys.argv[2]
     df = load_data(stock_ticker, start_date)
-    df = add_SMA(df)
-    df = add_RSI(df)
-    df = add_bandwidth(df)
-    df = add_pct_change(df)
+    training_df, validation_df, testing_df = split_data(df)
+
+    # df = add_SMA(df)
+    # df = add_RSI(df)
+    # df = add_bandwidth(df)
+    # df = add_pct_change(df)
     visualize_data(df, stock_ticker, start_date)
     scale_and_save_data(df, f"{stock_ticker}_data.csv")
 
