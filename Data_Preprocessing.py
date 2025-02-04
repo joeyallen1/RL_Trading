@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 
 
-def load_data(stock_ticker: str, start_date:str) -> pd.DataFrame:
+def load_data(stock_ticker: str, start_date: str) -> pd.DataFrame:
     """Returns a dataframe containing the close and volume data 
     for a given stock ticker and start date."""
 
@@ -19,6 +19,7 @@ def load_data(stock_ticker: str, start_date:str) -> pd.DataFrame:
 def split_data(df: pd.DataFrame) -> tuple:
     """Splits the given dataframe into training, validation,
     and test sets."""
+
     length = len(df)
     training_df = df.iloc[:int(0.6 * length), :]
     validation_df = df.iloc[int(0.6*length):int(0.7*length), :]
@@ -26,61 +27,83 @@ def split_data(df: pd.DataFrame) -> tuple:
     return training_df, validation_df, testing_df
     
 
-## add regular MACD and MACD oscillator
-def add_MACD(dataframe):
-    df = dataframe.copy(deep=True)
+def add_MACD(df: pd.DataFrame):
+    """Adds column containing the MACD indicator and a column containing
+    the MACD percentage indicator to the given dataframe.
+    
+    MACD (moving average convergence/divergence) is a momentum
+    indicator that uses two exponential moving averages of a stock's 
+    price. The regular MACD is calculated by subtracting the long term
+    EMA from the short term EMA, and then the regular MACD is divided
+    by the long term EMA to get the MACD percentage (in terms of the 
+    long term EMA). The MACD percentage is then clipped to prevent values
+    less than -1 and greater than 1. In practice, the regular MACD can be used
+    as a buy signal when its value is greater than 0 and a sell
+    signal when its value is less than 0."""
+
     df['EMA 3'] = df['Close'].ewm(span=3, adjust=False).mean()
     df['EMA 10'] = df['Close'].ewm(span=10, adjust=False).mean()
-    df.dropna(inplace=True)
     df['MACD'] = df['EMA 3'] - df['EMA 10']
-    df['MACD Oscillator'] = (df['EMA 3'] - df['EMA 10']) / df['EMA 10']
+    df['MACD Percentage'] = np.clip((df['EMA 3'] - df['EMA 10']) / df['EMA 10'], -1.0, 1.0)
     df.drop(labels=['EMA 3' 'EMA 10'], axis=1, inplace=True)
-    return df
 
 
-## volume percentage oscillator
-def add_Volume_Oscillator(dataframe):
-    df = dataframe.copy(deep=True)
+def add_Volume_Oscillator(df: pd.DataFrame):
+    """Adds column containing the volume oscillator indicator
+    to the given dataframe.
+    
+    The volume oscillator captures trends in the trading volume of a stock.
+    It is calculated by subtracting a long term moving average of the trading
+    volume from a short term moving average. This value is then divided
+    by the long term average to get a percentage value, which is 
+    then clipped to the range [-1, 1]."""
     df['EMA 5'] = df['Volume'].ewm(span=5, adjust=False).mean()
-    df['EMA 20'] = df['Volume'].ewm(span=5, adjust=False).mean()
-    df.dropna(inplace=True)
-    df['Volume Oscillator'] = (df['EMA 5'] - df['EMA 20']) / df['EMA 20'] 
+    df['EMA 20'] = df['Volume'].ewm(span=20, adjust=False).mean()
+    df['Volume Oscillator'] = np.clip((df['EMA 5'] - df['EMA 20']) / df['EMA 20'], -1.0, 1.0)
     df.drop(labels=['EMA 5' 'EMA 20'], axis=1, inplace=True)
-    return df
-
-## standard deviation percentage oscillator
-def add_Std_Oscillator(dataframe):
-    df = dataframe.copy(deep=True)
-    df['Std'] = df['Close'].rolling(window=14).std()
-    rolling_max = df['Std'].rolling(window=14).max()
-    rolling_min = df['Std'].rolling(window=14).min()
-    df['Std Oscillator'] = (df['Std'] - rolling_min) / (rolling_max - rolling_min)
-    df.drop(labels=['Std'], axis=1, inplace=True)
-    return df
 
 
-# RSI (Relative Strength Index):
-# - simple momentum indicator, used to identify overbought or oversold conditions
-# - calculated using formula 100 - (100 / (1 + RSI)) where RSI is the mean gain divided by the mean loss over some time period
-# - a value above 70 is typically used to indicate that an asset is overbought and a value less tahn 30 is typically used to indicate that an asset is oversold
-# - calculated here using a 14 day rolling window
-def add_RSI(dataframe):
-    df = dataframe.copy(deep=True)
+def add_Coefficient_of_Variation(df: pd.DataFrame):
+    """Adds column containing the coefficient of variation indicator to the given dataframe.
+    
+    The coefficient of variation of price can be used to measure the volatility of a stock. 
+    The indicator used here is calculated using the standard deviation of prices divided
+    by a simple moving average of prices over a rolling window. Here, the value is 
+    clipped to the range [0, 1]."""
+
+    df['Std'] = df['Close'].rolling(window=10).std()
+    df['SMA'] = df['Close'].rolling(window=10).mean()
+    df.dropna(inplace=True)
+    df['CV'] = np.clip(df['Std'] / df['SMA'], 0, 1)
+    df.drop(labels=['Std', 'SMA'], axis=1, inplace=True)
+
+
+def add_RSI(df: pd.DataFrame):
+    """Adds column containing the RSI to the given dataframe.
+    
+    RSI (Relative Strength Index) is a simple momentum indicator used
+    to identify overbought or oversold conditions. It is calculated using the 
+    formula 100 - (100 / (1 + R)) where R is the mean gain divided by the mean loss over a rolling window.
+    In practice, a value above 70 is typically used to indicate that an asset is overbought 
+    and a value less tahn 30 is typically used to indicate that an asset is oversold.
+    Here, the value is then divided by 100 to get an indicator in the range [0, 1]."""
+
     df['Diff'] = df['Close'].diff()
     df.dropna(inplace=True)
-    df['Mean gain'] = df['Diff'].rolling(window=14).apply(lambda x: x[x > 0].mean())
-    df['Mean loss'] = df['Diff'].rolling(window=14).apply(lambda x: abs(x[x <= 0].mean()))
+    df['Mean gain'] = df['Diff'].rolling(window=10).apply(lambda x: x[x > 0].mean())
+    df['Mean loss'] = df['Diff'].rolling(window=10).apply(lambda x: abs(x[x <= 0].mean()))
     df.dropna(inplace=True)
     df['RSI'] = 100 - (100 / (1 + (df['Mean gain'] / df['Mean loss'])))
     df.drop(labels=['Diff', 'Mean gain', 'Mean loss'], axis=1, inplace=True)
-    return df
 
 
-def add_pct_change(dataframe):
-    df = dataframe.copy(deep=True)
+def add_pct_change(df: pd.DataFrame):
+    """Adds column containing the percentage change from the previous 
+    close price to the given dataframe."""
+
     df['Pct Change'] = df['Close'].pct_change()
     df.dropna(inplace=True)
-    return df
+    
 
 def scale_and_save_data(dataframe, filename):
     df = dataframe.copy(deep=True)
