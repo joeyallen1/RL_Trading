@@ -25,6 +25,7 @@ class TrainingEnv(gym.Env):
 
             budget: the starting budget allocated to the stock, set to 10000 by default
         """
+
         self.starting_budget = budget
         self.portfolio_value = budget
         self.buy_and_hold_value = budget
@@ -57,19 +58,23 @@ class TrainingEnv(gym.Env):
 
     def _get_info(self) -> dict:
         """Returns a dictionary containing the current portfolio value, the action just taken, the current asset allocation,
-        and what the current portfolio value would be if 100% was allocated to the stock at every timestep."""
+        what the current portfolio value would be if 100% was allocated to the stock at every timestep,
+        the regular MACD value at this timestep, and the RSI value at this timestep."""
 
         return {'Portfolio Value': self.portfolio_value, 'Action Taken': self.cur_action, 'Asset Allocation': self.asset_allocation,
-                'Buy and Hold Value': self.buy_and_hold_value}
+                'Buy and Hold Value': self.buy_and_hold_value, 'MACD': self.data.iloc[self.cur_row_num, 1],
+                'RSI': self.data.iloc[self.cur_row_num, 5]}
 
 
     def reset(self, seed: int =None) -> tuple:
         """Resets the environment to start the next training episode. This involves seeding the random generator field,
-        resetting the current action, starting the next episode at a random location in the training data, and resetting 
-        the asset allocation. Returns the next observation and extra state info."""
+        resetting the current action, starting the next episode at a random location in the training data, resetting 
+        the asset allocation, and resetting the portfolio and buy and hold portfolio values.
+        Returns the next observation and extra state info."""
 
         super().reset(seed=seed)
         self.portfolio_value = self.starting_budget
+        self.buy_and_hold_value = self.starting_budget
         self.cur_action = 2
 
         self.starting_row_num = self.np_random.integers(0, int(len(self.data)) - self.episode_length - 1)
@@ -89,7 +94,7 @@ class TrainingEnv(gym.Env):
 
         self.cur_action = action
         self.cur_row_num += 1
-        if (self.cur_row_num - self.starting_row_num) > self.episode_length:
+        if (self.cur_row_num - self.starting_row_num) > self.episode_length - 2:
             terminated = True
         else:
             terminated = False
@@ -173,11 +178,13 @@ class TestingEnv(TrainingEnv):
 
     def reset(self, seed: int =None) -> tuple:
         """Resets the environment to start the testing episode. This involves seeding the random generator field,
-        resetting the current action, starting the episode at the beginning of the testing set, and resetting 
-        the asset allocation. Returns the next observation and extra state info."""
+        resetting the current action, starting the episode at the beginning of the testing set, resetting 
+        the asset allocation, and resetting both the portfolio value and the buy and hold portfolio value.
+        Returns the next observation and extra state info."""
 
         gym.Env.reset(self, seed=seed)
         self.portfolio_value = self.starting_budget
+        self.buy_and_hold_value = self.starting_budget
         self.cur_action = 2
 
         self.starting_row_num = 0
