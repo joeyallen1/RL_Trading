@@ -2,7 +2,7 @@ import yfinance
 import pandas as pd
 import numpy as np
 import sys
-import matplotlib.pyplot as plt
+import os
 
 
 
@@ -46,12 +46,12 @@ def add_MACD(dataframes: tuple):
     signal when its value is less than 0."""
 
     for df in dataframes:
-        df['EMA 3'] = df['Close'].ewm(span=3, adjust=False).mean()
-        df['EMA 10'] = df['Close'].ewm(span=10, adjust=False).mean()
-        df['MACD'] = df['EMA 3'] - df['EMA 10']
-        df['MACD Percentage'] = ((df['EMA 3'] - df['EMA 10']) / df['EMA 10']) * 10
+        df['EMA 12'] = df['Close'].ewm(span=12, adjust=False).mean()
+        df['EMA 26'] = df['Close'].ewm(span=26, adjust=False).mean()
+        df['MACD'] = df['EMA 12'] - df['EMA 26']
+        df['MACD Percentage'] = ((df['EMA 12'] - df['EMA 26']) / df['EMA 26']) * 10
         df['MACD Percentage'] = np.clip(df['MACD Percentage'], -1.0, 1.0) 
-        df.drop(labels=['EMA 3', 'EMA 10'], axis=1, inplace=True)
+        df.drop(labels=['EMA 12', 'EMA 26'], axis=1, inplace=True)
 
 
 def add_Volume_Oscillator(dataframes: tuple):
@@ -115,7 +115,7 @@ def add_pct_change(dataframes: tuple):
     the range [-1, 1]."""
 
     for df in dataframes:
-        df['Pct Change'] = np.clip(df['Close'].pct_change(), -1, 1)
+        df['Pct Change'] = np.clip(df['Close'].pct_change(periods=5), -1, 1)
         df.dropna(inplace=True)
 
 
@@ -148,6 +148,7 @@ if __name__ == "__main__":
     print(training_df.describe(), "\n")
     print(validation_df.describe(), "\n")
     print(testing_df.describe())
-    training_df.to_csv(f'./{stock_ticker}_Training.csv')
-    validation_df.to_csv(f'./{stock_ticker}_Validation.csv')
-    testing_df.to_csv(f'./{stock_ticker}_Testing.csv')
+    os.mkdir(f"./{stock_ticker}")
+    training_df.to_csv(f'./{stock_ticker}/Training.csv')
+    validation_df.to_csv(f'./{stock_ticker}/Validation.csv')
+    testing_df.to_csv(f'./{stock_ticker}/Testing.csv')
