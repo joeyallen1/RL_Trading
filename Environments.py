@@ -43,7 +43,7 @@ class TrainingEnv(gym.Env):
         self.action_space = Discrete(5)
 
         # observation space: MACD Percentage, Volume Oscillator, CV, RSI, Pct Change, Asset Allocation
-        self.observation_space = Box(low=np.array([-1.0, -1.0, -1.0, -1.0, -1.0, 0.0]),
+        self.observation_space = Box(low=np.array([-1.0, -1.0, 0.0, -1.0, -1.0, 0.0]),
             high=np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0]), dtype=np.float64)
 
 

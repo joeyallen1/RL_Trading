@@ -76,15 +76,15 @@ def add_Coefficient_of_Variation(dataframes: tuple):
     
     The coefficient of variation of price can be used to measure the volatility of a stock. 
     The indicator used here is calculated using the standard deviation of prices divided
-    by a simple moving average of prices over a rolling window. Here, the value is 
-    then clipped to the range [-1, 1]."""
+    by a simple moving average of prices over a rolling window. Here, the value is multiplied
+    by a factor of 5 for scaling and then clipped to the range [0, 1]."""
 
     for df in dataframes:
         df['Std'] = df['Close'].rolling(window=10).std()
         df['SMA'] = df['Close'].rolling(window=10).mean()
         df.dropna(inplace=True)
-        df['CV'] = df['Std'] / df['SMA']
-        df['CV'] = np.clip(df['CV'], -1, 1)
+        df['CV'] = df['Std'] / df['SMA'] * 5
+        df['CV'] = np.clip(df['CV'], 0, 1)
         df.drop(labels=['Std', 'SMA'], axis=1, inplace=True)
 
 
@@ -148,7 +148,10 @@ if __name__ == "__main__":
     print(training_df.describe(), "\n")
     print(validation_df.describe(), "\n")
     print(testing_df.describe())
-    os.mkdir(f"./{stock_ticker}")
+    try:
+        os.mkdir(f"./{stock_ticker}")
+    except FileExistsError:
+        print("Cannot create directory since it already exists, please delete it manually first if you wish to overwrite it.")
     training_df.to_csv(f'./{stock_ticker}/Training.csv')
     validation_df.to_csv(f'./{stock_ticker}/Validation.csv')
     testing_df.to_csv(f'./{stock_ticker}/Testing.csv')
