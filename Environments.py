@@ -133,12 +133,13 @@ class TrainingEnv(gym.Env):
     def _get_new_portfolio_value(self) -> float:
         """Calculates the new portfolio value (it assumes a step was just taken), taking into account the 
         change in close price of the stock and also keeping the cash kept in reserve at a constant price. Accounts for 
-        transaction fees and/or slippage during trading by applying a fixed .1% cost to the price of the trade just made.
+        transaction fees and/or slippage during trading by applying a fixed 1% cost to the price of the trade just made.
+        This also discourages overtrading.
         Returns the new portfolio value."""
 
         percent_change = (self.data.iloc[self.cur_row_num, 0] - self.data.iloc[self.cur_row_num-1, 0]) / self.data.iloc[self.cur_row_num-1, 0]
         new_portfolio_value = self.portfolio_value * (self.asset_allocation * (1.0 + percent_change) + (1.0 - self.asset_allocation))
-        new_portfolio_value = new_portfolio_value - (.001 * abs(self.allocation_change) * self.portfolio_value)
+        new_portfolio_value = new_portfolio_value - (.01 * abs(self.allocation_change) * self.portfolio_value)
         return new_portfolio_value
     
 
@@ -155,7 +156,8 @@ class TrainingEnv(gym.Env):
         reward = np.log(new_portfolio_value / self.portfolio_value)
         self.portfolio_value = new_portfolio_value
         # return max(-2.0, min(2.0, reward))
-        return reward - np.log(self.data.iloc[self.cur_row_num, 0] / self.data.iloc[self.cur_row_num-1, 0])
+        reward = reward - np.log(self.data.iloc[self.cur_row_num, 0] / self.data.iloc[self.cur_row_num-1, 0])
+        return reward * 10
     
 
 
