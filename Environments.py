@@ -133,12 +133,12 @@ class TrainingEnv(gym.Env):
     def _get_new_portfolio_value(self) -> float:
         """Calculates the new portfolio value (it assumes a step was just taken), taking into account the 
         change in close price of the stock and also keeping the cash kept in reserve at a constant price. Accounts for 
-        transaction fees and/or slippage during trading by applying a fixed 1% cost to the price of the trade just made.
+        transaction fees and/or slippage during trading by applying a fixed .1% cost to the price of the trade just made.
         Returns the new portfolio value."""
 
         percent_change = (self.data.iloc[self.cur_row_num, 0] - self.data.iloc[self.cur_row_num-1, 0]) / self.data.iloc[self.cur_row_num-1, 0]
         new_portfolio_value = self.portfolio_value * (self.asset_allocation * (1.0 + percent_change) + (1.0 - self.asset_allocation))
-        new_portfolio_value = new_portfolio_value - (.01 * abs(self.allocation_change) * self.portfolio_value)
+        new_portfolio_value = new_portfolio_value - (.001 * abs(self.allocation_change) * self.portfolio_value)
         return new_portfolio_value
     
 
@@ -146,7 +146,10 @@ class TrainingEnv(gym.Env):
         """Calculates the reward for the last action taken. The reward function is the log return
         of the environment's portfolio minus the log return of just the stock price over the same 
         timestep. This is used to encourage the trading algorithm to outperform the stock and creates 
-        a reward structure that gives more meaningful "feedback" on the actions being taken."""
+        a reward structure that gives more meaningful "feedback" on the actions being taken.
+        Log return is used to make the reward function smoother than other
+        metrics such as simple percent return. 
+        Also sets the portfolio value field to the new value."""
 
         new_portfolio_value = max(self._get_new_portfolio_value(), 1.0)
         reward = np.log(new_portfolio_value / self.portfolio_value)
