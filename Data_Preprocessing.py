@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 import sys
 import os
+from sklearn.preprocessing import RobustScaler
+import matplotlib.pyplot as plt
 
 
 
@@ -17,7 +19,7 @@ def load_data(stock_ticker: str, start_date: str) -> pd.DataFrame:
     return data
 
 
-def split_data(df: pd.DataFrame) -> tuple:
+def split_data(df: pd.DataFrame) -> list:
     """Splits the given dataframe into training, validation,
     and test sets."""
 
@@ -25,78 +27,72 @@ def split_data(df: pd.DataFrame) -> tuple:
     training_df = df.iloc[:int(0.7 * length), :].copy(deep=True)
     validation_df = df.iloc[int(0.7*length):int(0.85*length), :].copy(deep=True)
     testing_df = df.iloc[int(0.85*length):, :].copy(deep=True)
-    return training_df, validation_df, testing_df
+    return [training_df, validation_df, testing_df]
     
 
-def add_MACD(dataframes: tuple):
+def add_MACD(dataframes: list):
     """Adds column containing the MACD indicator and a column containing
-    the MACD percentage indicator each given dataframe.
+    the MACD percentage indicator to each given dataframe.
     
     MACD (moving average convergence/divergence) is a momentum
     indicator that uses two exponential moving averages of a stock's 
     price. The regular MACD is calculated by subtracting the long term
     EMA from the short term EMA, and then the regular MACD is divided
     by the long term EMA to get the MACD percentage (in terms of the 
-    long term EMA). Here, the value is then scaled by a factor of 10
-    to better align with the scaling of other features. 
-    The MACD percentage is then clipped to the range [-1, 1].
+    long term EMA). 
 
     In practice, the regular MACD can be used
-    as a buy signal when its value is greater than 0 and a sell
-    signal when its value is less than 0."""
+    as a buy signal when its value goes from negative to positive
+    and a sell signal when its value goes from positive to negative."""
 
     for df in dataframes:
         df['EMA 12'] = df['Close'].ewm(span=12, adjust=False).mean()
         df['EMA 26'] = df['Close'].ewm(span=26, adjust=False).mean()
         df['MACD'] = df['EMA 12'] - df['EMA 26']
-        df['MACD Percentage'] = ((df['EMA 12'] - df['EMA 26']) / df['EMA 26']) * 10
-        df['MACD Percentage'] = np.clip(df['MACD Percentage'], -1.0, 1.0) 
+        df['MACD Percentage'] = ((df['EMA 12'] - df['EMA 26']) / df['EMA 26'])
         df.drop(labels=['EMA 12', 'EMA 26'], axis=1, inplace=True)
 
 
-def add_Volume_Oscillator(dataframes: tuple):
+def add_Volume_Oscillator(dataframes: list):
     """Adds column containing the volume oscillator indicator
     to each given dataframe.
     
     The volume oscillator captures trends in the trading volume of a stock.
     It is calculated by subtracting a long term moving average of the trading
     volume from a short term moving average. This value is then divided
-    by the long term average to get a percentage value, which is 
-    then clipped to the range [-1, 1]."""
+    by the long term average to get a percentage value."""
 
     for df in dataframes:
-        df['EMA 5'] = df['Volume'].ewm(span=5, adjust=False).mean()
-        df['EMA 20'] = df['Volume'].ewm(span=20, adjust=False).mean()
-        df['Volume Oscillator'] = np.clip((df['EMA 5'] - df['EMA 20']) / df['EMA 20'], -1.0, 1.0) 
-        df.drop(labels=['EMA 5', 'EMA 20'], axis=1, inplace=True)
+        df['EMA 12'] = df['Volume'].ewm(span=12, adjust=False).mean()
+        df['EMA 26'] = df['Volume'].ewm(span=26, adjust=False).mean()
+        df['Volume Oscillator'] = (df['EMA 12'] - df['EMA 26']) / df['EMA 26'] 
+        df.drop(labels=['EMA 12', 'EMA 26'], axis=1, inplace=True)
 
 
-def add_Coefficient_of_Variation(dataframes: tuple):
+def add_Coefficient_of_Variation(dataframes: list):
     """Adds column containing the coefficient of variation indicator to each given dataframe.
     
     The coefficient of variation of price can be used to measure the volatility of a stock. 
     The indicator used here is calculated using the standard deviation of prices divided
-    by a simple moving average of prices over a rolling window. Here, the value is multiplied
-    by a factor of 5 for scaling and then clipped to the range [0, 1]."""
+    by a simple moving average of prices over a rolling window."""
 
     for df in dataframes:
         df['Std'] = df['Close'].rolling(window=10).std()
         df['SMA'] = df['Close'].rolling(window=10).mean()
         df.dropna(inplace=True)
-        df['CV'] = df['Std'] / df['SMA'] * 5
-        df['CV'] = np.clip(df['CV'], 0, 1)
+        df['CV'] = df['Std'] / df['SMA'] 
         df.drop(labels=['Std', 'SMA'], axis=1, inplace=True)
 
 
-def add_RSI(dataframes: tuple):
-    """Adds column containing the RSI to the each given dataframe.
+def add_RSI(dataframes: list):
+    """Adds two columns containing the RSI to the each given dataframe.
+    The second will be scaled while the first will be kept as a benchmark.
     
     RSI (Relative Strength Index) is a simple momentum indicator used
     to identify overbought or oversold conditions. It is calculated using the 
     formula 100 - (100 / (1 + R)) where R is the mean gain divided by the mean loss over a rolling window.
     In practice, a value above 70 is typically used to indicate that an asset is overbought 
-    and a value less tahn 30 is typically used to indicate that an asset is oversold.
-    Here, the value is then divided by 50 and then subtracted by 1 to get an indicator in the range [-1, 1]."""
+    and a value less tahn 30 is typically used to indicate that an asset is oversold."""
 
     for df in dataframes:
         df['Diff'] = df['Close'].diff()
@@ -105,25 +101,75 @@ def add_RSI(dataframes: tuple):
         df['Mean loss'] = df['Diff'].rolling(window=10).apply(lambda x: abs(x[x <= 0].mean()))
         df.dropna(inplace=True)
         df['RSI'] = 100 - (100 / (1 + (df['Mean gain'] / df['Mean loss'])))
-        df['RSI'] = df['RSI'] / 50 - 1
+        df['Scaled RSI'] = df['RSI']
         df.drop(labels=['Diff', 'Mean gain', 'Mean loss'], axis=1, inplace=True)
 
 
-def add_pct_change(dataframes: tuple):
+def add_pct_change(dataframes: list):
     """Adds column containing the percentage change from the previous 
-    close price to each given dataframe. This value is clipped to 
-    the range [-1, 1]."""
+    close price 5 steps previous to each given dataframe. This is used
+    to capture short term momentum."""
 
     for df in dataframes:
-        df['Pct Change'] = np.clip(df['Close'].pct_change(periods=5), -1, 1)
+        df['Pct Change'] = df['Close'].pct_change(periods=5)
         df.dropna(inplace=True)
 
 
-def drop_volume(dataframes: tuple):
+def drop_volume(dataframes: list):
     """Drops the volume column from all given dataframes."""
 
     for df in dataframes:
         df.drop(labels=['Volume'], axis=1, inplace=True)
+
+
+def reorder_columns(dataframes: list):
+    """Reorders columns so that RSI column is the first indicator in the dataframe.
+    This is just done to make indexing easier in the environment implementation."""
+
+    columns_titles = ["Close", "RSI", "MACD", "MACD Percentage", "Volume Oscillator", "CV", "Scaled RSI", "Pct Change"]
+    for i in range(len(dataframes)):
+        dataframes[i] = dataframes[i][columns_titles]
+
+
+def scale_data(dataframes: list):
+    """ Scales the training data and uses these parameters for scaling the 
+    validation and testing sets. The columns that will be used as the 
+    state space for the reinforcement learning agent are then clipped
+    to the range [-3, 3] to remove extreme outliers."""
+
+    scaler = RobustScaler()
+    columns = dataframes[0].columns
+    scaled_training_data = scaler.fit_transform(dataframes[0].iloc[:, 3:])
+    scaled_validation_data = scaler.transform(dataframes[1].iloc[:, 3:])
+    scaled_testing_data = scaler.transform(dataframes[2].iloc[:, 3:])
+
+    scaled_training_df = pd.DataFrame(scaled_training_data, columns=columns[3:])
+    scaled_validation_df = pd.DataFrame(scaled_validation_data, columns = columns[3:])
+    scaled_testing_df = pd.DataFrame(scaled_testing_data, columns = columns[3:])
+
+    scaled_training_df = scaled_training_df.clip(lower=-3, upper=3)
+    scaled_validation_df = scaled_validation_df.clip(lower=-3, upper=3)
+    scaled_testing_df = scaled_testing_df.clip(lower=-3, upper=3)
+
+    dataframes[0] = pd.concat([dataframes[0].iloc[:, :3], scaled_training_df], axis=1)
+    dataframes[1] = pd.concat([dataframes[1].iloc[:, :3], scaled_validation_df], axis=1)
+    dataframes[2] = pd.concat([dataframes[2].iloc[:, :3], scaled_testing_df], axis=1)
+
+
+def visualize_data(dataframes: list):
+    """Plots histograms of features in training, validation, and testing datasets
+    after scaling and clipping. Used for quick visualization."""
+    
+    dataframes[0].iloc[:, 3:].hist(bins=15)
+    plt.suptitle("Histograms of scaled and clipped features for training data")
+
+    dataframes[1].iloc[:, 3:].hist(bins=15)
+    plt.suptitle("Histograms of scaled and clipped features for validation data")
+
+    dataframes[2].iloc[:, 3:].hist(bins=15)
+    plt.suptitle("Histograms of scaled and clipped features for testing data")
+
+    plt.show()
 
 
 
@@ -132,26 +178,27 @@ def drop_volume(dataframes: tuple):
 
 if __name__ == "__main__":
 
-    #TODO: revisit features/feature scaling
-
     stock_ticker = sys.argv[1]
     start_date = sys.argv[2]
     df = load_data(stock_ticker, start_date)
-    training_df, validation_df, testing_df = split_data(df)
-    dataframes = (training_df, validation_df, testing_df)
+    dataframes = split_data(df)
     add_MACD(dataframes)
     add_Volume_Oscillator(dataframes)
     add_Coefficient_of_Variation(dataframes)
     add_RSI(dataframes)
     add_pct_change(dataframes)
     drop_volume(dataframes)
-    print(training_df.describe(), "\n")
-    print(validation_df.describe(), "\n")
-    print(testing_df.describe())
+    reorder_columns(dataframes)
+    dataframes = list(dataframes)
+    scale_data(dataframes)
+    print(dataframes[0].describe(), "\n")
+    print(dataframes[1].describe(), "\n")
+    print(dataframes[2].describe())
+    visualize_data(dataframes)
     try:
-        os.mkdir(f"./{stock_ticker}")
+        os.mkdir(f"./{stock_ticker}_scaled")
     except FileExistsError:
         print("Cannot create directory since it already exists, please delete it manually first if you wish to overwrite it.")
-    training_df.to_csv(f'./{stock_ticker}/Training.csv')
-    validation_df.to_csv(f'./{stock_ticker}/Validation.csv')
-    testing_df.to_csv(f'./{stock_ticker}/Testing.csv')
+    dataframes[0].to_csv(f'./{stock_ticker}_scaled/Training.csv')
+    dataframes[1].to_csv(f'./{stock_ticker}_scaled/Validation.csv')
+    dataframes[2].to_csv(f'./{stock_ticker}_scaled/Testing.csv')
