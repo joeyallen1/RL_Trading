@@ -146,6 +146,10 @@ def scale_data(dataframes: list):
     scaled_training_df = pd.DataFrame(scaled_training_data, columns=columns[3:])
     scaled_validation_df = pd.DataFrame(scaled_validation_data, columns = columns[3:])
     scaled_testing_df = pd.DataFrame(scaled_testing_data, columns = columns[3:])
+    
+    scaled_training_df.index = dataframes[0].index
+    scaled_validation_df.index = dataframes[1].index
+    scaled_testing_df.index = dataframes[2].index
 
     scaled_training_df = scaled_training_df.clip(lower=-3, upper=3)
     scaled_validation_df = scaled_validation_df.clip(lower=-3, upper=3)
@@ -154,6 +158,8 @@ def scale_data(dataframes: list):
     dataframes[0] = pd.concat([dataframes[0].iloc[:, :3], scaled_training_df], axis=1)
     dataframes[1] = pd.concat([dataframes[1].iloc[:, :3], scaled_validation_df], axis=1)
     dataframes[2] = pd.concat([dataframes[2].iloc[:, :3], scaled_testing_df], axis=1)
+
+
 
 
 def visualize_data(dataframes: list):
@@ -189,7 +195,6 @@ if __name__ == "__main__":
     add_pct_change(dataframes)
     drop_volume(dataframes)
     reorder_columns(dataframes)
-    dataframes = list(dataframes)
     scale_data(dataframes)
     print(dataframes[0].describe(), "\n")
     print(dataframes[1].describe(), "\n")
