@@ -8,16 +8,16 @@ import pandas as pd
 class TrainingEnv(gym.Env):
     """An environment for training a reinforcement learning algorithm on stock data that implements
     OpenAI's gymnasium interface. The purpose of the algorithm that uses this environment 
-    is to learn how to balance budget allocation between a single stock and cash reserves to maximize profits.
+    is to learn how to balance budget allocation between a single stock and cash reserves over time to maximize profits.
     The environment allows for changing the budget allocation at each step and provides a reward 
-    in the form of the return at each step relative to the buy-and-hold strategy. """
+    in the form of the return at each step relative to the return of just the stock price. """
 
 
     def __init__(self, training_data: pd.DataFrame, episode_length: int, budget: int =10000):
         """
         Args:
-            training_data: dataframe of training data. Should contain columns for Close, MACD, 
-            MACD Percentage, Volume Oscillator, CV, RSI, Pct Change.
+            training_data: dataframe of training data. Should contain columns for Close, RSI, MACD, 
+            MACD Percentage, Volume Oscillator, CV, Scaled RSI, Pct Change (in that order)
 
             episode_length: the number of steps in each training episode. It is assumed that 
             the episode length is equal to the length of the validation and testing datasets
@@ -32,7 +32,7 @@ class TrainingEnv(gym.Env):
         self.cur_row_num = 0
         self.starting_row_num = 0
         self.asset_allocation = 1.0
-        self.data = training_data   #Close, MACD, MACD Percentage, Volume Oscillator, CV, RSI, Pct Change
+        self.data = training_data  
         self.episode_length = episode_length
         self.cur_action = 2
         self.allocation_change = 0.0
@@ -42,16 +42,16 @@ class TrainingEnv(gym.Env):
         # action space: Sell 25%, sell 10%, no change, buy 10%, buy 25% (percentages are of total portfolio value, asset + cash, at each timestep)
         self.action_space = Discrete(5)
 
-        # observation space: MACD Percentage, Volume Oscillator, CV, RSI, Pct Change, Asset Allocation
-        self.observation_space = Box(low=np.array([-1.0, -1.0, 0.0, -1.0, -1.0, 0.0]),
-            high=np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0]), dtype=np.float64)
+        # observation space: MACD Percentage, Volume Oscillator, CV, Scaled RSI, Pct Change, Asset Allocation
+        self.observation_space = Box(low=np.array([-3.0, -3.0, -3.0, -3.0, -3.0, 0.0]),
+            high=np.array([3.0, 3.0, 3.0, 3.0, 3.0, 1.0]), dtype=np.float64)
 
 
     def _get_obs(self) -> np.array:
         """Returns the state space at the current step, which consists of the indicators
-        in the given data with the current asset allocation appended."""
+        in the observation space with the current asset allocation appended."""
 
-        obs = np.array(self.data.iloc[self.cur_row_num, 2:])
+        obs = np.array(self.data.iloc[self.cur_row_num, 3:])
         obs = np.append(obs, self.asset_allocation)
         return obs
 
@@ -59,11 +59,11 @@ class TrainingEnv(gym.Env):
     def _get_info(self) -> dict:
         """Returns a dictionary containing the current portfolio value, the action just taken, the current asset allocation,
         what the current portfolio value would be if 100% was allocated to the stock at every timestep,
-        the regular MACD value at this timestep, and the RSI value at this timestep."""
+        the regular MACD value at this timestep, and the regular RSI value at this timestep."""
 
         return {'Portfolio Value': self.portfolio_value, 'Action Taken': self.cur_action, 'Asset Allocation': self.asset_allocation,
-                'Buy and Hold Value': self.buy_and_hold_value, 'MACD': self.data.iloc[self.cur_row_num, 1],
-                'RSI': self.data.iloc[self.cur_row_num, 5]}
+                'Buy and Hold Value': self.buy_and_hold_value, 'MACD': self.data.iloc[self.cur_row_num, 2],
+                'RSI': self.data.iloc[self.cur_row_num, 1]}
 
 
     def reset(self, seed: int =None) -> tuple:
@@ -155,9 +155,8 @@ class TrainingEnv(gym.Env):
         new_portfolio_value = max(self._get_new_portfolio_value(), 1.0)
         reward = np.log(new_portfolio_value / self.portfolio_value)
         self.portfolio_value = new_portfolio_value
-        # return max(-2.0, min(2.0, reward))
         reward = reward - np.log(self.data.iloc[self.cur_row_num, 0] / self.data.iloc[self.cur_row_num-1, 0])
-        return reward * 10
+        return reward 
     
 
 
