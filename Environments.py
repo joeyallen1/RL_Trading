@@ -101,13 +101,13 @@ class TrainingEnv(gym.Env):
         truncated = False
         self.allocation_change = self._action_to_allocation(action) - self.asset_allocation
         self.asset_allocation = self._action_to_allocation(action)
-        self.update_buy_and_hold()
+        self._update_buy_and_hold()
         obs = self._get_obs()
         rew = self._get_reward()
         info = self._get_info()
         return obs, rew, terminated, truncated, info
     
-    def update_buy_and_hold(self):
+    def _update_buy_and_hold(self):
         """Updates the value of the portfolio consisting of 100% allocation
         to the stock."""
 
@@ -149,14 +149,15 @@ class TrainingEnv(gym.Env):
         timestep. This is used to encourage the trading algorithm to outperform the stock and creates 
         a reward structure that gives more meaningful "feedback" on the actions being taken.
         Log return is used to make the reward function smoother than other
-        metrics such as simple percent return. 
+        metrics such as simple percent return, and the reward is also scaled by a constant 
+        factor of 10 for better training performance.
         Also sets the portfolio value field to the new value."""
 
         new_portfolio_value = max(self._get_new_portfolio_value(), 1.0)
         reward = np.log(new_portfolio_value / self.portfolio_value)
         self.portfolio_value = new_portfolio_value
         reward = reward - np.log(self.data.iloc[self.cur_row_num, 0] / self.data.iloc[self.cur_row_num-1, 0])
-        return reward 
+        return reward * 10
     
 
 

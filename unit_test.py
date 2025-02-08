@@ -12,7 +12,7 @@ class TestTrainingEnv:
         data = pd.read_csv('./KO_scaled/Testing.csv')
         data.drop(labels=['Date'], axis=1, inplace=True)
         data = data.iloc[:, :].copy(deep=True)
-        return TrainingEnv(data, episode_length=2)
+        return TrainingEnv(data, episode_length=3)
     
     def test_initialization(self, setup):
         env = setup
@@ -23,7 +23,7 @@ class TestTrainingEnv:
         assert env.starting_row_num == 0
         assert env.asset_allocation == 1.0
         assert len(env.data) == 735
-        assert env.episode_length == 2
+        assert env.episode_length == 3
         assert env.cur_action == 2
         assert env.allocation_change == 0.0
 
@@ -72,12 +72,12 @@ class TestTrainingEnv:
         assert env.portfolio_value == 10000
         assert env.buy_and_hold_value == 10000
         assert env.cur_action == 2
-        assert env.starting_row_num == 491
-        assert env.cur_row_num == 491
+        assert env.starting_row_num == 490
+        assert env.cur_row_num == 490
         assert env.asset_allocation == 1.0
         assert env.allocation_change == 0.0
 
-        array = np.array([-0.08600161569508559,0.5057631872683497,-0.3421661628364696,1.0261471676417078,0.5953727884744595, 
+        array = np.array([-0.2070785 ,  0.3377747 , -0.6652482 , -0.98585003, -0.23207383, 
                           1.0])
         assert np.allclose(obs, array) == True
 
@@ -85,8 +85,8 @@ class TestTrainingEnv:
                                    'Action Taken': 2, 
                                    'Asset Allocation': 1.0,
                                    'Buy and Hold Value': 10000,
-                                   'MACD': 0.0884711636519028,
-                                   'RSI': 71.76820103869917}
+                                   'MACD': 0.0046280243457346,
+                                   'RSI': 32.55843718916388}
 
 
     def test_step(self, setup):
@@ -104,7 +104,7 @@ class TestTrainingEnv:
                           -2.365991921602965, 
                           .75])
         assert np.allclose(obs, array, rtol=.01) == True
-        assert rew == pytest.approx(0.0076809765)
+        assert rew == pytest.approx(0.0076809765 * 10)
         assert terminated == False
         assert truncated == False
         assert info == {'Portfolio Value': 9677.84828602265, 
@@ -125,7 +125,7 @@ class TestTrainingEnv:
         array = np.array([-0.5162393203401424,0.5714804258515582,2.0931656119780517,-0.8315609558397491,-2.4575531583820083,
                           .85])
         assert np.allclose(obs, array, rtol=.01) == True
-        assert rew == pytest.approx(-.0017596596)
+        assert rew == pytest.approx(-.0017596596 * 10)
         assert terminated == True
         assert truncated == False
         assert info == {'Portfolio Value': 9710.239260837297, 
@@ -173,7 +173,7 @@ class TestTrainingEnv:
         env.asset_allocation = 0.1
         env.cur_action = 3
         env.allocation_change = 0.1
-        assert env._get_reward() == pytest.approx(0.0354521029)
+        assert env._get_reward() == pytest.approx(0.0354521029 * 10)
         assert env.portfolio_value == pytest.approx(9950.379771)
 
     
