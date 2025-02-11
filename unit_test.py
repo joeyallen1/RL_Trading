@@ -104,7 +104,7 @@ class TestTrainingEnv:
                           -2.365991921602965, 
                           .75])
         assert np.allclose(obs, array, rtol=.01) == True
-        assert rew == pytest.approx(0.0076809765 * 10)
+        assert rew == pytest.approx(0.0076809765)
         assert terminated == False
         assert truncated == False
         assert info == {'Portfolio Value': 9677.84828602265, 
@@ -125,7 +125,7 @@ class TestTrainingEnv:
         array = np.array([-0.5162393203401424,0.5714804258515582,2.0931656119780517,-0.8315609558397491,-2.4575531583820083,
                           .85])
         assert np.allclose(obs, array, rtol=.01) == True
-        assert rew == pytest.approx(-.0017596596 * 10)
+        assert rew == pytest.approx(-.0017596596)
         assert terminated == True
         assert truncated == False
         assert info == {'Portfolio Value': 9710.239260837297, 
@@ -173,7 +173,7 @@ class TestTrainingEnv:
         env.asset_allocation = 0.1
         env.cur_action = 3
         env.allocation_change = 0.1
-        assert env._get_reward() == pytest.approx(0.0354521029 * 10)
+        assert env._get_reward() == pytest.approx(0.0354521029)
         assert env.portfolio_value == pytest.approx(9950.379771)
 
     
