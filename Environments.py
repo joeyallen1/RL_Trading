@@ -66,7 +66,7 @@ class TrainingEnv(gym.Env):
                 'RSI': self.data.iloc[self.cur_row_num, 1]}
 
 
-    def reset(self, seed: int =None) -> tuple:
+    def reset(self, seed: int =None, options=None) -> tuple:
         """Resets the environment to start the next training episode. This involves seeding the random generator field,
         resetting the current action, starting the next episode at a random location in the training data, resetting 
         the asset allocation, and resetting the portfolio and buy and hold portfolio values.
@@ -186,7 +186,7 @@ class TestingEnv(TrainingEnv):
         the asset allocation, and resetting both the portfolio value and the buy and hold portfolio value.
         Returns the next observation and extra state info."""
 
-        gym.Env.reset(self, seed=seed)
+        gym.Env.reset(self, seed=seed, options=None)
         self.portfolio_value = self.starting_budget
         self.buy_and_hold_value = self.starting_budget
         self.cur_action = 2
