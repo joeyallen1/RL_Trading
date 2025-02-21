@@ -49,6 +49,7 @@ While reinforcement learning offers potential advantages in financial markets, s
 - **Market Non-Stationarity:** Stock market dynamics change over time, making it difficult for an RL model to generalize.
 - **External Influences:** Market movements are driven by factors beyond historical price data, such as news, sentiment, and economic events.
 - **Feature Lagging:** Many technical indicators rely on past data and may not provide predictive insights.
+- **Randomness:** Financial environments exhibit high levels of noise and make predictions difficult.
 - **Algorithm Constraints:** DQN operates in a discrete action space and is sensitive to hyperparameter tuning.
 
 ## Current Work
