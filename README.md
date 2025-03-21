@@ -2,6 +2,9 @@
 
 A trading bot for single-stock trading trained using reinforcement learning (RL).
 
+Disclaimer: This project is for educational purposes only. It does not provide financial advice, and I do not endorse using it for real-world trading. The goal is solely to explore the application of reinforcement learning to financial data.
+
+
 ## Table of Contents
 1. [Overview](#overview)
 2. [Features](#features)
